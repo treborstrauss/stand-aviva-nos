@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Stand Aviva-nos</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stand">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0F131B">
+<style>
+@font-face{font-family:Poppins;font-weight:400;font-display:swap;src:url(fonts/Poppins-Regular.ttf)}
+@font-face{font-family:Poppins;font-weight:700;font-display:swap;src:url(fonts/Poppins-Bold.ttf)}
+
+/* Layout: balcão de vendas. Catálogo de mockups à esquerda, pedido em andamento à direita; abas para pedidos, produção e medidas. */
+:root{
+  --bg:#E8ECF1; --surface:#FFFFFF; --sunk:#F3F5F8; --ink:#131926; --muted:#5B6577; --line:#D3D9E2;
+  --accent:#E3A008; --accent-ink:#1B1403; --gold-text:#8A5B00;
+  --ok:#1E7B4B; --warn:#A8500A; --info:#2456A6; --danger:#B3261E;
+  --font:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F131B; --surface:#1A202C; --sunk:#141924; --ink:#EEF1F6; --muted:#9AA5B8; --line:#2C3545;
+  --accent:#F0B429; --accent-ink:#1B1403; --gold-text:#F0B429;
+  --ok:#5CCB8F; --warn:#F39A4A; --info:#7FB0FF; --danger:#FF8A80; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0F131B; --surface:#1A202C; --sunk:#141924; --ink:#EEF1F6; --muted:#9AA5B8; --line:#2C3545;
+  --accent:#F0B429; --accent-ink:#1B1403; --gold-text:#F0B429;
+  --ok:#5CCB8F; --warn:#F39A4A; --info:#7FB0FF; --danger:#FF8A80; color-scheme:dark }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:light}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3,p{margin:0}
+h2{font-size:18px;font-weight:700;text-wrap:balance}
+h3{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+
+/* topo */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.brand{display:flex;flex-direction:column;line-height:1.15}
+.brand b{font-size:20px;font-weight:700;letter-spacing:.04em}
+.brand b span{color:var(--gold-text)}
+.brand small{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap}
+.tabs a{padding:9px 16px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:400;white-space:nowrap}
+.tabs a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+.sync{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.sync.on i{background:var(--ok)} .sync.off i{background:var(--danger)}
+.banner{background:color-mix(in srgb,var(--warn) 14%,var(--surface));border:1px solid var(--warn);border-radius:var(--r);padding:10px 14px}
+
+/* botões */
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:400}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:13px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* novo pedido */
+.novo{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.cat{display:flex;flex-direction:column;gap:14px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0;overflow:hidden;text-align:left;display:flex;flex-direction:column}
+.card img{display:block;width:100%;aspect-ratio:1100/742;object-fit:cover;background:#E6EAEF}
+.card .tx{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px}
+.card .nm{font-weight:700;line-height:1.25}
+.card .ln{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.card .pr{color:var(--ink);font-weight:700}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.tag.inf{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,var(--line))}
+
+.cart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px;position:sticky;top:12px}
+.items{display:flex;flex-direction:column;gap:8px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.item .nm{font-weight:400;line-height:1.25;min-width:0}
+.item .sub{font-size:12px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);font-size:18px;line-height:1}
+.qty span{min-width:20px;text-align:center;font-weight:700}
+.empty{color:var(--muted);background:var(--sunk);border:1px dashed var(--line);border-radius:12px;padding:14px;font-size:14px}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
+.total b{font-size:24px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:400}
+.f input,.f textarea,.busca{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);padding:8px 12px;font-size:16px;color:var(--ink);width:100%}
+.f textarea{min-height:60px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg label{position:relative;display:block}
+.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52px;border:1px solid var(--line);border-radius:12px;background:var(--sunk);font-weight:700;font-size:14px;text-align:center;line-height:1.15;padding:4px}
+.seg span small{font-weight:400;font-size:11px;color:var(--muted)}
+.seg input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg input:checked+span small{color:inherit;opacity:.75}
+.seg input:focus-visible+span{outline:3px solid var(--info);outline-offset:2px}
+.note{font-size:13px;border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--info) 12%,var(--surface));color:var(--ink)}
+.err{font-size:13px;color:var(--danger);font-weight:400}
+
+/* janelas */
+.ov{position:fixed;inset:0;background:rgba(8,11,18,.6);display:flex;align-items:center;justify-content:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dlg{background:var(--surface);border-radius:18px;width:min(760px,100%);max-height:100%;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.dlg img{width:100%;border-radius:12px;display:block}
+.dlg .hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sizes{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.sz{position:relative;min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);font-weight:700;font-size:17px}
+.sz b{position:absolute;top:-6px;right:-4px;min-width:22px;height:22px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.msg{width:100%;min-height:210px;border-radius:12px;border:1px solid var(--line);background:var(--sunk);padding:12px;font-size:14px;line-height:1.5;color:var(--ink)}
+.big{font-size:34px;font-weight:700;line-height:1}
+
+/* pedidos */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:400;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:8px}
+.ped{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.ped.canc{opacity:.6}
+.ped .hd{width:100%;border:0;background:none;text-align:left;padding:12px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:center}
+.ped .n{font-weight:700;font-size:17px;color:var(--gold-text)}
+.ped .who{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.ped .val{font-weight:700;text-align:right}
+.ped .pills{grid-column:2/4;display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 15%,var(--surface));color:var(--warn)}
+.pill.info{background:color-mix(in srgb,var(--info) 15%,var(--surface));color:var(--info)}
+.pill.off{background:var(--sunk);color:var(--muted)}
+.pill.bad{background:color-mix(in srgb,var(--danger) 15%,var(--surface));color:var(--danger)}
+.ped .bd{border-top:1px solid var(--line);padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.ped ul{margin:0;padding-left:18px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 16px;font-size:14px}
+.kv div{min-width:0;overflow-wrap:anywhere}
+.kv small{display:block;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+
+/* produção */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.stat small{display:block;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.stat b{font-size:22px;font-weight:700}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.wl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.bar{height:12px;border-radius:6px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--info)}
+.bar.full i{background:var(--ok)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 8px;text-align:center;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--muted);font-weight:700}
+td:first-child,th:first-child{text-align:left;white-space:nowrap}
+td.z{color:var(--line)}
+td.t,th.t{font-weight:700;border-left:1px solid var(--line)}
+tfoot td{font-weight:700;border-bottom:0}
+.med{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:400;z-index:30;max-width:90vw}
+
+@media (max-width:760px){
+  .novo{grid-template-columns:minmax(0,1fr)}
+  .cart{position:static}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sizes{grid-template-columns:repeat(4,1fr)}
+  .sync{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>AVIVA<span>-NOS</span></b><small>Stand de camisetas · sob encomenda</small></div>
+    <nav class="tabs" aria-label="Seções">
+      <a href="#novo" data-tab="novo">Novo pedido</a>
+      <a href="#pedidos" data-tab="pedidos">Pedidos <span class="num" id="tab-n"></span></a>
+      <a href="#mensagens" data-tab="mensagens">Mensagens <span class="num" id="tab-m"></span></a>
+      <a href="#producao" data-tab="producao">Produção</a>
+      <a href="#medidas" data-tab="medidas">Medidas</a>
+      <a href="#ajustes" data-tab="ajustes">Ajustes</a>
+    </nav>
+    <a class="sync" id="sync" href="#ajustes" style="text-decoration:none"><i></i><span></span></a>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+
+  <!-- NOVO PEDIDO -->
+  <section id="v-novo" class="novo">
+    <div class="cat">
+      <div><h3>Coleção Aviva-nos · R$ 59,90</h3></div>
+      <div class="grid" id="g-aviva"></div>
+      <div><h3>Coleção We Are Eagles · R$ 49,90</h3></div>
+      <div class="grid" id="g-wae"></div>
+    </div>
+    <aside class="cart" id="cart">
+      <h2 id="cart-title">Pedido em andamento</h2>
+      <div class="items" id="items"></div>
+      <div class="total"><span>Total</span><b class="num" id="tot">R$ 0,00</b></div>
+      <div id="prazo"></div>
+      <label class="f">Responsável *<input id="f-resp" autocomplete="off" placeholder="Nome de quem está comprando"></label>
+      <label class="f">WhatsApp<input id="f-fone" inputmode="tel" autocomplete="off" placeholder="(41) 9 0000-0000"></label>
+      <div class="two">
+        <label class="f">Aluno<input id="f-aluno" autocomplete="off"></label>
+        <label class="f">Turma<input id="f-turma" autocomplete="off"></label>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Pagamento">
+        <label><input type="radio" name="pg" id="pg-reserva" value="reserva" checked><span>Reservar<small>paga na retirada</small></span></label>
+        <label><input type="radio" name="pg" id="pg-pix" value="pix"><span>Pago<small>Pix</small></span></label>
+        <label><input type="radio" name="pg" id="pg-cartao" value="cartao"><span>Pago<small>cartão</small></span></label>
+      </div>
+      <label class="f">Observação<textarea id="f-obs"></textarea></label>
+      <div class="err" id="f-err" hidden></div>
+      <div class="row">
+        <button class="btn pri" id="b-salvar" data-act="salvar" style="flex:1">Registrar pedido</button>
+        <button class="btn" data-act="limpar">Limpar</button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- PEDIDOS -->
+  <section id="v-pedidos" hidden style="display:flex;flex-direction:column;gap:12px">
+    <input class="busca" id="busca" type="search" placeholder="Buscar por nome, aluno, telefone ou número do pedido" autocomplete="off">
+    <div class="chips" id="chips"></div>
+    <div class="list" id="lista"></div>
+  </section>
+
+  <!-- MENSAGENS -->
+  <section id="v-mensagens" hidden style="display:flex;flex-direction:column;gap:10px"></section>
+
+  <!-- PRODUÇÃO -->
+  <section id="v-producao" hidden style="display:flex;flex-direction:column;gap:14px"></section>
+
+  <!-- MEDIDAS -->
+  <section id="v-medidas" hidden>
+    <div class="med">
+      <div class="panel"><h2>Adulto</h2><p class="muted">Medidas em centímetros, com a camiseta esticada na mesa.</p><div class="scroll"><table id="t-ad"></table></div></div>
+      <div class="panel"><h2>Infantil</h2><p class="muted">Disponível em todas as cores. Prazo de até um mês.</p><div class="scroll"><table id="t-inf"></table></div></div>
+    </div>
+  </section>
+</div>
+
+<section id="v-ajustes" hidden style="display:flex;flex-direction:column;gap:14px;max-width:1240px;margin:16px auto 0"></section>
+
+<div class="ov" id="ov" hidden><div class="dlg" id="dlg" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="core.js"></script>
+<script>
+/* ---------- regras do stand ---------- */
+const AD=['PP','P','M','G','GG','G1','G2','G3'], INF=['1','2','4','6','8','10','12','14'];
+const MED_AD=[['PP',68,46],['P',70,51],['M',72,54],['G',74,57],['GG',76,60],['G1',79,62],['G2',82,65],['G3',85,68]];
+const MED_INF=[['1',37,30],['2',43,32],['4',49,34],['6',51,36],['8',55,38],['10',57,40],['12',59,42],['14',60,44]];
+const PRAZO_DIAS=10;
+const MODELOS=[
+ {id:1, col:'Aviva-nos', nome:'Envio de uma Geração', cor:'Preta',   preco:5990},
+ {id:2, col:'Aviva-nos', nome:'Envio de uma Geração', cor:'Chumbo',  preco:5990},
+ {id:9, col:'Aviva-nos', nome:'Quanto a nós',         cor:'Preta',   preco:5990},
+ {id:3, col:'Aviva-nos', nome:'Logo pequeno',         cor:'Marrom',  preco:5990},
+ {id:4, col:'Aviva-nos', nome:'Logo pequeno',         cor:'Verde',   preco:5990},
+ {id:8, col:'Aviva-nos', nome:'Logo pequeno',         cor:'Marinho', preco:5990},
+ {id:5, col:'Aviva-nos', nome:'Ave nas costas',       cor:'Marrom',  preco:5990},
+ {id:6, col:'Aviva-nos', nome:'Ave nas costas',       cor:'Verde',   preco:5990},
+ {id:7, col:'Aviva-nos', nome:'Ave nas costas',       cor:'Marinho', preco:5990},
+ {id:10,col:'We Are Eagles', nome:'We Are Eagles',    cor:'Marinho', preco:4990},
+ {id:11,col:'We Are Eagles', nome:'We Are Eagles',    cor:'Laranja', preco:4990},
+];
+
+/* ---------- utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl=c=>(c/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const M=id=>MODELOS.find(m=>m.id===id);
+const isInf=t=>/^\d+$/.test(t);
+const rotulo=m=>`${m.nome} · ${m.cor}`;
+const dia=iso=>iso?new Date(iso).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
+const mais=(iso,d)=>{const x=new Date(iso);x.setDate(x.getDate()+d);return x.toISOString()};
+const n3=n=>String(n).padStart(3,'0');
+const totalDe=itens=>itens.reduce((s,i)=>s+(M(i.m)?.preco||0)*i.q,0);
+const pecas=itens=>itens.reduce((s,i)=>s+i.q,0);
+let toastT; function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2200)}
+
+/* ---------- estado ---------- */
+const cod=p=>p.cod||cod(p);
+const LS={get(k,d){try{const v=localStorage.getItem('stand.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('stand.'+k,JSON.stringify(v));return true}catch(e){return false}}};
+let cfg=Object.assign({dev:'',nome:'',repo:'treborstrauss/stand-aviva-nos-dados',token:''},LS.get('cfg',{}));
+let pedidos=LS.get('pedidos',[]),carregado=true;
+let sujo=LS.get('sujo',false),shas=LS.get('shas',{}),ultSinc=LS.get('ultSinc',null),rev=0,sincOcupado=false,sincErro='',offlineOk=false,sincT;
+const porData=(a,b)=>String(a.criadoEm).localeCompare(String(b.criadoEm));
+let cart=[],editando=null,filtro='todos',aberto=null,confirma=null,ocupado=false,pickerM=null;
+
+const ativos=()=>pedidos.filter(p=>!p.cancelado);
+const temA=p=>(p.itens||[]).some(i=>!isInf(i.t)), temI=p=>(p.itens||[]).some(i=>isInf(i.t));
+const entregueTudo=p=>(!temA(p)||p.entA)&&(!temI(p)||p.entI);
+
+/* ---------- catálogo ---------- */
+function renderCatalogo(){
+  const card=m=>`<button class="card" data-act="abrir" data-m="${m.id}">
+    <img src="img/m${m.id}.jpg" alt="Camiseta ${esc(rotulo(m))}, frente e costas" loading="lazy">
+    <span class="tx"><span class="nm">${esc(m.nome)}</span>
+    <span class="ln"><span>${esc(m.cor)}</span><span class="pr num">${brl(m.preco)}</span></span></span></button>`;
+  $('#g-aviva').innerHTML=MODELOS.filter(m=>m.col==='Aviva-nos').map(card).join('');
+  $('#g-wae').innerHTML=MODELOS.filter(m=>m.col!=='Aviva-nos').map(card).join('');
+}
+function qtdCart(m,t){return cart.find(i=>i.m===m&&i.t===t)?.q||0}
+function renderPicker(){
+  const m=M(pickerM); if(!m) return;
+  const bt=t=>{const q=qtdCart(m.id,t);return `<button class="sz" data-act="add" data-t="${t}">${t}${q?`<b class="num">${q}</b>`:''}</button>`};
+  $('#dlg').innerHTML=`<div class="hd"><div><h2>${esc(m.nome)}</h2><div class="muted">${esc(m.col)} · ${esc(m.cor)} · <b class="num">${brl(m.preco)}</b></div></div>
+      <button class="btn dark" data-act="fechar">Concluir</button></div>
+    <img src="img/m${m.id}.jpg" alt="Camiseta ${esc(rotulo(m))}, frente e costas">
+    <div><h3>Adulto · pronto em até ${PRAZO_DIAS} dias corridos</h3></div>
+    <div class="sizes">${AD.map(bt).join('')}</div>
+    <div><h3>Infantil · prazo de até um mês</h3></div><div class="sizes">${INF.map(bt).join('')}</div>
+    <p class="muted" style="font-size:13px">Toque no tamanho para adicionar. Toque de novo para somar mais uma.</p>`;
+}
+
+/* ---------- carrinho ---------- */
+function renderCart(){
+  $('#cart-title').textContent=editando?`Editando pedido nº ${cod(editando)}`:'Pedido em andamento';
+  $('#b-salvar').textContent=editando?'Salvar alterações':'Registrar pedido';
+  $('#items').innerHTML=cart.length?cart.map((i,k)=>{const m=M(i.m);return `<div class="item">
+      <div><div class="nm">${esc(m.nome)}</div><div class="sub">${esc(m.cor)} · tam. <b>${esc(i.t)}</b>${isInf(i.t)?' infantil':''} · <span class="num">${brl(m.preco)}</span></div></div>
+      <div class="qty"><button data-act="menos" data-k="${k}" aria-label="Diminuir">−</button><span class="num">${i.q}</span><button data-act="mais" data-k="${k}" aria-label="Aumentar">+</button></div></div>`}).join('')
+    :'<div class="empty">Toque em uma camiseta ao lado e escolha o tamanho.</div>';
+  $('#tot').textContent=brl(totalDe(cart));
+  const a=cart.some(i=>!isInf(i.t)), f=cart.some(i=>isInf(i.t));
+  const base=editando?.criadoEm||new Date().toISOString();
+  $('#prazo').innerHTML=(a||f)?`<div class="note">${a?`Adulto: pronto até <b>${dia(mais(base,PRAZO_DIAS))}</b>.`:''}${a&&f?'<br>':''}${f?`Infantil: prazo maior, de até um mês. Avisamos pelo WhatsApp quando chegar.`:''}</div>`:'';
+}
+function limpar(){cart=[];editando=null;for(const id of ['f-resp','f-fone','f-aluno','f-turma','f-obs'])$('#'+id).value='';$('#pg-reserva').checked=true;$('#f-err').hidden=true;renderCart()}
+function erro(t){const e=$('#f-err');e.textContent=t;e.hidden=!t}
+
+function gravar(){
+  if(!LS.set('pedidos',pedidos)) aviso('Não foi possível gravar neste iPad (armazenamento cheio ou bloqueado). Anote no papel.');
+  rev++;sujo=true;LS.set('sujo',true);tudo();status();clearTimeout(sincT);sincT=setTimeout(()=>sincronizar(),3000);
+}
+function salvar(){
+  const resp=$('#f-resp').value.trim();
+  if(!cfg.dev){location.hash='ajustes';return toast('Escolha primeiro a letra deste iPad.')}
+  if(!cart.length) return erro('Adicione pelo menos uma camiseta.');
+  if(!resp) return erro('Preencha o nome do responsável.');
+  erro('');
+  const agora=new Date().toISOString();
+  const pg=document.querySelector('input[name=pg]:checked').value;
+  let base;
+  if(editando) base={...editando};
+  else{
+    const seq=pedidos.filter(p=>p.dev===cfg.dev).reduce((m,p)=>Math.max(m,p.seq||0),LS.get('seq',0))+1;LS.set('seq',seq);
+    base={id:cfg.dev+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),dev:cfg.dev,seq,cod:cfg.dev+'-'+n3(seq),
+      criadoEm:agora,vendNome:cfg.nome||'',pago:false,forma:'',pagoEm:null,entA:false,entI:false,cancelado:false,msgEnv:false};
+  }
+  const pago=pg!=='reserva';
+  const corpo={...base,resp,fone:$('#f-fone').value.trim(),aluno:$('#f-aluno').value.trim(),turma:$('#f-turma').value.trim(),obs:$('#f-obs').value.trim(),
+    itens:cart.map(i=>({m:i.m,t:i.t,q:i.q})),pago,forma:pago?pg:'',pagoEm:pago?(base.pago&&base.forma===pg?base.pagoEm:agora):null,upd:agora};
+  const k=pedidos.findIndex(p=>p.id===corpo.id); if(k>=0)pedidos[k]=corpo; else pedidos.push(corpo);
+  limpar();gravar();mostrarMsg(corpo,true);
+}
+
+/* ---------- mensagem para o responsável ---------- */
+function textoMsg(p){
+  const l=[`Olá, ${p.resp.split(' ')[0]}! Seu pedido nº ${cod(p)} no stand Aviva-nos foi registrado.`,''];
+  for(const i of p.itens){const m=M(i.m);l.push(`• ${i.q}× ${m.nome} (${m.cor.toLowerCase()}) — tam. ${i.t}${isInf(i.t)?' infantil':''}`)}
+  l.push('',`Total: ${brl(totalDe(p.itens))} — ${p.pago?`pago (${p.forma==='pix'?'Pix':'cartão'})`:'pagamento na retirada, por Pix ou cartão'}`);
+  if(temA(p)) l.push(`Tamanhos adultos: prontos em até ${PRAZO_DIAS} dias corridos (até ${dia(mais(p.criadoEm,PRAZO_DIAS))}).`);
+  if(temI(p)) l.push(`Tamanhos infantis: prazo maior, de até um mês. Avisamos por aqui quando chegar.`);
+  l.push('','Escola Renovação');
+  return l.join('\n');
+}
+function linkWa(p){const d=String(p.fone||'').replace(/\D/g,'');if(d.length<10)return '';return `https://wa.me/${d.length<=11?'55'+d:d}?text=${encodeURIComponent(textoMsg(p))}`}
+const aWa=lk=>`<a class="btn sm pri" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="${esc(lk)}">Abrir no WhatsApp</a>`;
+function mostrarMsg(p,novo){
+  const txt=textoMsg(p), lk=linkWa(p);
+  $('#dlg').innerHTML=`<div class="hd"><div>${novo?'<h3>Pedido registrado</h3>':'<h3>Mensagem do pedido</h3>'}<div class="big num">nº ${cod(p)}</div>
+      <div class="muted">${esc(p.resp)} · <b class="num">${brl(totalDe(p.itens))}</b> · ${p.pago?'pago':'paga na retirada'}</div></div>
+      <button class="btn dark" data-act="fechar">${novo?'Próximo cliente':'Fechar'}</button></div>
+    <textarea class="msg" id="msg-txt" readonly>${esc(txt)}</textarea>
+    ${lk?`<label class="f">Link do WhatsApp (abre a conversa com a mensagem pronta)<input id="link-txt" readonly value="${esc(lk)}"></label>`:'<p class="err">Sem telefone válido neste pedido: não há link de WhatsApp. Edite o pedido para incluir o número.</p>'}
+    <div class="row">${lk?aWa(lk)+'<button class="btn sm" data-act="copiar-link-dlg">Copiar link</button>':''}
+      <button class="btn sm" data-act="copiar">Copiar mensagem</button>
+      ${p.msgEnv?`<button class="btn sm" data-act="enviada" data-v="0" data-id="${p.id}">Enviada · desfazer</button>`:`<button class="btn sm dark" data-act="enviada" data-v="1" data-id="${p.id}">Marcar como enviada</button>`}</div>
+    <p class="muted" style="font-size:13px">Não precisa enviar agora. O pedido fica na aba Mensagens, com o link, até ser marcado como enviado.</p>`;
+  pickerM=null;$('#ov').hidden=false;
+}
+function renderMensagens(){
+  const pend=ativos().filter(p=>!p.msgEnv).sort(porData), env=ativos().length-pend.length;
+  $('#tab-m').textContent=carregado&&pend.length?`(${pend.length})`:'';
+  const el=$('#v-mensagens');
+  if(!carregado){el.innerHTML='<div class="empty">Carregando pedidos…</div>';return}
+  el.innerHTML=`<div class="panel"><h2>Mensagens a enviar</h2>
+      <p class="muted">Todo pedido fica aqui, com o link do WhatsApp, até você marcar a mensagem como enviada. Sem internet o WhatsApp não abre: envie depois, por aqui mesmo, ou copie os links. <span class="num">${pend.length}</span> a enviar · <span class="num">${env}</span> enviadas.</p>
+      ${pend.some(linkWa)?'<div class="row"><button class="btn sm" data-act="copiar-todos">Copiar todos os links</button></div>':''}</div>`
+    +(pend.length?pend.map(p=>{const lk=linkWa(p);return `<div class="ped"><div class="bd" style="border-top:0">
+        <div class="row" style="justify-content:space-between"><span><span class="n num">${cod(p)}</span> <b>${esc(p.resp)}</b></span><span class="${lk?'muted':'err'} num">${lk?esc(p.fone):'sem telefone válido'}</span></div>
+        <div class="row">${lk?aWa(lk)+`<button class="btn sm" data-act="copiar-link" data-id="${p.id}">Copiar link</button>`:''}
+          <button class="btn sm" data-act="msg" data-id="${p.id}">Ver mensagem</button>
+          <button class="btn sm dark" data-act="enviada" data-v="1" data-id="${p.id}">Marcar como enviada</button></div></div></div>`}).join('')
+      :`<div class="empty">${ativos().length?'Todas as mensagens foram enviadas.':'Nenhum pedido ainda. Cada pedido registrado aparece aqui com o link do WhatsApp.'}</div>`);
+}
+async function copiarTxt(t,ok){try{await navigator.clipboard.writeText(t);toast(ok)}catch(e){toast('Não deu para copiar aqui. Toque em Ver mensagem e copie de lá.')}}
+async function copiar(id,ok){const el=$('#'+id);try{await navigator.clipboard.writeText(el.value);toast(ok)}catch(e){el.focus();el.select();toast('Texto selecionado. Use Copiar.')}}
+
+/* ---------- pedidos ---------- */
+const FILTROS=[['todos','Todos',p=>true],['receber','A receber',p=>!p.cancelado&&!p.pago],['pagos','Pagos',p=>!p.cancelado&&p.pago],
+  ['entregar','A entregar',p=>!p.cancelado&&!entregueTudo(p)],['entregues','Entregues',p=>!p.cancelado&&entregueTudo(p)],
+  ['infantil','Com infantil',p=>!p.cancelado&&temI(p)],['cancelados','Cancelados',p=>p.cancelado]];
+function renderPedidos(){
+  $('#tab-n').textContent=carregado&&ativos().length?`(${ativos().length})`:'';
+  $('#chips').innerHTML=FILTROS.map(([k,r,f])=>`<button class="chip" data-act="filtro" data-f="${k}" aria-pressed="${filtro===k}">${r} <span class="num">${pedidos.filter(f).length}</span></button>`).join('');
+  const q=$('#busca').value.trim().toLowerCase();
+  const f=FILTROS.find(x=>x[0]===filtro)[2];
+  const vis=pedidos.filter(f).filter(p=>!q||[p.resp,p.aluno,p.turma,p.fone,cod(p),String(p.fone||'').replace(/\D/g,'')].some(v=>String(v||'').toLowerCase().includes(q)))
+    .sort((a,b)=>porData(b,a));
+  if(!carregado){$('#lista').innerHTML='<div class="empty">Carregando pedidos…</div>';return}
+  if(!pedidos.length){$('#lista').innerHTML='<div class="empty">Nenhum pedido ainda. Os pedidos registrados em “Novo pedido” aparecem aqui. Os do outro iPad chegam quando houver internet.</div>';return}
+  if(!vis.length){$('#lista').innerHTML='<div class="empty">Nenhum pedido neste filtro.</div>';return}
+  const hoje=new Date().toISOString();
+  $('#lista').innerHTML=vis.map(p=>{
+    const pills=[];
+    if(p.cancelado) pills.push('<span class="pill bad">Cancelado</span>');
+    else{
+      pills.push(p.pago?`<span class="pill ok">Pago · ${p.forma==='pix'?'Pix':'cartão'}</span>`:'<span class="pill warn">A receber</span>');
+      if(temA(p)) pills.push(p.entA?'<span class="pill off">Adulto entregue</span>':`<span class="pill ${mais(p.criadoEm,PRAZO_DIAS)<hoje?'bad':'info'}">Adulto até ${dia(mais(p.criadoEm,PRAZO_DIAS))}</span>`);
+      if(temI(p)) pills.push(p.entI?'<span class="pill off">Infantil entregue</span>':'<span class="pill info">Infantil até um mês</span>');
+    }
+    const ab=aberto===p.id;
+    let bd='';
+    if(ab){
+      const its=p.itens.map(i=>{const m=M(i.m);return `<li><b class="num">${i.q}×</b> ${esc(m.nome)} · ${esc(m.cor)} · tam. <b>${esc(i.t)}</b>${isInf(i.t)?' infantil':''}</li>`}).join('');
+      const acts=[];
+      if(!p.cancelado){
+        if(!p.pago) acts.push(`<button class="btn sm pri" data-act="pagar" data-forma="pix" data-id="${p.id}">Recebi no Pix</button><button class="btn sm pri" data-act="pagar" data-forma="cartao" data-id="${p.id}">Recebi no cartão</button>`);
+        else acts.push(`<button class="btn sm" data-act="despagar" data-id="${p.id}">Desfazer pagamento</button>`);
+        if(temA(p)) acts.push(`<button class="btn sm ${p.entA?'':'dark'}" data-act="ent" data-k="entA" data-id="${p.id}">${p.entA?'Desfazer entrega adulto':'Entregar adulto'}</button>`);
+        if(temI(p)) acts.push(`<button class="btn sm ${p.entI?'':'dark'}" data-act="ent" data-k="entI" data-id="${p.id}">${p.entI?'Desfazer entrega infantil':'Entregar infantil'}</button>`);
+        acts.push(`<button class="btn sm" data-act="msg" data-id="${p.id}">Mensagem</button><button class="btn sm" data-act="editar" data-id="${p.id}">Editar</button>`);
+        acts.push(confirma===p.id?`<button class="btn sm danger" data-act="cancelar" data-id="${p.id}">Confirmar cancelamento</button>`:`<button class="btn sm danger" data-act="pedir-cancel" data-id="${p.id}">Cancelar pedido</button>`);
+      } else acts.push(`<button class="btn sm" data-act="reativar" data-id="${p.id}">Reativar pedido</button>`);
+      bd=`<div class="bd"><ul>${its}</ul>
+        <div class="kv"><div><small>WhatsApp</small>${esc(p.fone)||'—'}</div><div><small>Aluno · turma</small>${esc([p.aluno,p.turma].filter(Boolean).join(' · '))||'—'}</div>
+          <div><small>Registrado</small>${dia(p.criadoEm)}${p.vendNome?' por '+esc(p.vendNome):''}</div>
+          ${p.pago?`<div><small>Pago em</small>${dia(p.pagoEm)}</div>`:''}${p.obs?`<div><small>Observação</small>${esc(p.obs)}</div>`:''}</div>
+        <div class="row">${acts.join('')}</div></div>`;
+    }
+    return `<div class="ped${p.cancelado?' canc':''}"><button class="hd" data-act="toggle" data-id="${p.id}" aria-expanded="${ab}">
+      <span class="n num">${cod(p)}</span><span class="who">${esc(p.resp)}${p.aluno?` <span class="muted" style="font-weight:400">· ${esc(p.aluno)}</span>`:''}</span>
+      <span class="val num">${brl(totalDe(p.itens))}<span class="muted" style="font-weight:400"> · ${pecas(p.itens)} pç</span></span>
+      <span class="pills">${pills.join('')}</span></button>${bd}</div>`}).join('');
+}
+function mudar(id,campos,ok){
+  const k=pedidos.findIndex(p=>p.id===id); if(k<0) return;
+  pedidos[k]={...pedidos[k],...campos,upd:new Date().toISOString()};
+  gravar(); if(ok)toast(ok);
+}
+
+/* ---------- sincronização e ajustes ---------- */
+function status(){
+  const s=$('#sync'); let c='',t;
+  if(!cfg.dev) t='Configurar este iPad';
+  else if(sincOcupado) t=`iPad ${cfg.dev} · sincronizando…`;
+  else if(!cfg.token) t=`iPad ${cfg.dev} · guardado só neste iPad`;
+  else if(sincErro==='token'||sincErro==='repo'){c='off';t=`iPad ${cfg.dev} · token ou repositório inválido`}
+  else if(sujo) t=`iPad ${cfg.dev} · salvo aqui, envia quando houver internet`;
+  else{c='on';t=`iPad ${cfg.dev} · sincronizado${ultSinc?' às '+new Date(ultSinc).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}`}
+  s.className='sync '+c;s.lastElementChild.textContent=t;
+  const e=$('#c-estado'); if(e) e.textContent=t;
+}
+async function sincronizar(manual){
+  if(sincOcupado) return;
+  if(!cfg.dev||!cfg.token||!cfg.repo){status();if(manual)toast('Cole o token de acesso para sincronizar.');return}
+  if(!navigator.onLine){status();if(manual)toast('Sem internet agora. Os pedidos estão salvos neste iPad.');return}
+  sincOcupado=true;status();
+  const r0=rev, st={repo:cfg.repo,token:cfg.token,dev:cfg.dev,pedidos,shas,sujo};
+  try{
+    const r=await Nucleo.sincronizar(st);
+    if(r.mudou){const m=Nucleo.mesclar(pedidos,st.pedidos);pedidos=m.pedidos;LS.set('pedidos',pedidos)}
+    shas=st.shas;LS.set('shas',shas);
+    if(rev===r0){sujo=false;LS.set('sujo',false)}
+    sincErro='';ultSinc=new Date().toISOString();LS.set('ultSinc',ultSinc);
+    if(r.mudou)tudo(); if(manual)toast('Sincronizado');
+  }catch(e){sincErro=e&&e.message||'rede';if(manual)toast(sincErro==='token'?'Token recusado pelo GitHub.':sincErro==='repo'?'Repositório não encontrado.':'Não deu para sincronizar agora. Tenta de novo sozinho.')}
+  sincOcupado=false;status();
+  if(rev!==r0){clearTimeout(sincT);sincT=setTimeout(()=>sincronizar(),3000)}
+}
+function renderAjustes(){
+  $('#v-ajustes').innerHTML=`
+  <div class="panel"><h2>Este iPad</h2><p class="muted">Cada aparelho precisa de uma letra diferente. Ela vai na frente do número do pedido (A-001, B-001).</p>
+    <div class="chips">${['A','B','C','R'].map(d=>`<button class="chip" data-act="dev" data-d="${d}" aria-pressed="${cfg.dev===d}">${d==='R'?'R · Robert':'iPad '+d}</button>`).join('')}</div>
+    <label class="f">Quem está vendendo neste aparelho<input id="c-nome" value="${esc(cfg.nome)}" autocomplete="off"></label>
+    <p><b class="num">${pedidos.length}</b> pedidos guardados neste aparelho · ${offlineOk?'<b>pronto para abrir sem internet</b>':'preparando o uso sem internet (precisa de conexão nesta primeira vez)'}</p></div>
+  <div class="panel"><h2>Sincronização</h2><p class="muted">Quando houver internet, este aparelho envia os pedidos para o repositório privado no GitHub e busca os do outro iPad, sozinho. Sem internet nada se perde: fica tudo guardado aqui.</p>
+    <label class="f">Repositório de dados<input id="c-repo" value="${esc(cfg.repo)}" autocomplete="off" autocapitalize="off"></label>
+    <label class="f">Token de acesso (colar uma vez)<input id="c-token" type="password" value="${esc(cfg.token)}" autocomplete="off"></label>
+    <div class="row"><button class="btn pri" data-act="salvar-cfg">Salvar e sincronizar</button><span class="muted" id="c-estado"></span></div></div>
+  <div class="panel"><h2>Cópia de segurança</h2><p class="muted">Funciona sem internet. Serve para passar os pedidos de um iPad para o outro por AirDrop ou para guardar uma cópia fora do aparelho.</p>
+    <div class="row"><button class="btn" data-act="bk-share">Enviar arquivo de backup</button><button class="btn" data-act="bk-copiar">Copiar backup</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Importar arquivo<input type="file" id="c-arq" accept=".json,application/json" hidden></label></div>
+    <label class="f">Ou cole aqui um backup copiado<textarea id="c-imp"></textarea></label>
+    <div class="row"><button class="btn" data-act="bk-importar">Importar texto colado</button></div></div>`;
+  status();
+}
+const backup=()=>JSON.stringify({dev:cfg.dev,em:new Date().toISOString(),pedidos});
+function importar(txt){
+  let j;try{j=JSON.parse(txt)}catch(e){return toast('Esse texto não é um backup válido.')}
+  const antes=pedidos.length, m=Nucleo.mesclar(pedidos,Array.isArray(j)?j:j.pedidos);
+  if(!m.mudou) return toast('Nada novo neste backup.');
+  pedidos=m.pedidos;gravar();renderAjustes();toast(`Importado: ${pedidos.length-antes} pedidos novos`);
+}
+function lerCfg(){const n=$('#c-nome'),r=$('#c-repo'),t=$('#c-token');if(n)cfg.nome=n.value.trim();if(r)cfg.repo=r.value.trim().replace(/^https:\/\/github\.com\//,'');if(t)cfg.token=t.value.trim();LS.set('cfg',cfg)}
+
+/* ---------- produção ---------- */
+function renderProducao(){
+  const at=ativos();
+  const tot=at.reduce((s,p)=>s+totalDe(p.itens),0);
+  const pix=at.filter(p=>p.pago&&p.forma==='pix').reduce((s,p)=>s+totalDe(p.itens),0);
+  const car=at.filter(p=>p.pago&&p.forma==='cartao').reduce((s,p)=>s+totalDe(p.itens),0);
+  const cont={}; for(const p of at)for(const i of p.itens){cont[i.m+'|'+i.t]=(cont[i.m+'|'+i.t]||0)+i.q}
+  const tabela=(tams,mods)=>{
+    const col=tams.map(t=>mods.reduce((s,m)=>s+(cont[m.id+'|'+t]||0),0));
+    return `<div class="scroll"><table><thead><tr><th>Modelo</th>${tams.map(t=>`<th>${t}</th>`).join('')}<th class="t">Total</th></tr></thead><tbody>
+      ${mods.map(m=>{const r=tams.map(t=>cont[m.id+'|'+t]||0);return `<tr><td>${esc(m.nome)} · ${esc(m.cor)}</td>${r.map(v=>`<td class="${v?'':'z'}">${v||'·'}</td>`).join('')}<td class="t">${r.reduce((a,b)=>a+b,0)}</td></tr>`}).join('')}
+      </tbody><tfoot><tr><td>Total</td>${col.map(v=>`<td>${v}</td>`).join('')}<td class="t">${col.reduce((a,b)=>a+b,0)}</td></tr></tfoot></table></div>`};
+  const linhas=[];
+  for(const m of MODELOS){const a=AD.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`), f=INF.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`);
+    if(a.length) linhas.push(`${m.nome} (${m.cor}) — adulto — ${a.join(', ')}`); if(f.length) linhas.push(`${m.nome} (${m.cor}) — infantil — ${f.join(', ')}`)}
+  $('#v-producao').innerHTML=!carregado?'<div class="empty">Carregando pedidos…</div>':`
+    <div class="stats">
+      <div class="stat"><small>Pedidos</small><b class="num">${at.length}</b></div>
+      <div class="stat"><small>Peças</small><b class="num">${at.reduce((s,p)=>s+pecas(p.itens),0)}</b></div>
+      <div class="stat"><small>Vendido</small><b class="num">${brl(tot)}</b></div>
+      <div class="stat"><small>Recebido no Pix</small><b class="num">${brl(pix)}</b></div>
+      <div class="stat"><small>Recebido no cartão</small><b class="num">${brl(car)}</b></div>
+      <div class="stat"><small>A receber na retirada</small><b class="num">${brl(tot-pix-car)}</b></div>
+    </div>
+    <div class="panel"><h2>Adulto, por modelo e tamanho</h2>${tabela(AD,MODELOS)}</div>
+    <div class="panel"><h2>Infantil, por modelo e tamanho</h2>${tabela(INF,MODELOS)}</div>
+    <div class="panel"><h2>Resumo para o fornecedor</h2><textarea class="msg" id="forn-txt" readonly style="min-height:150px">${esc(linhas.join('\n')||'Nenhuma peça pedida ainda.')}</textarea>
+      <div class="row"><button class="btn" data-act="copiar-forn">Copiar resumo</button><span class="muted" style="font-size:13px">Pedidos cancelados não entram na conta.</span></div></div>`;
+}
+function renderMedidas(){
+  const t=r=>`<thead><tr><th>Tamanho</th><th>Altura</th><th>Largura</th></tr></thead><tbody>${r.map(x=>`<tr><td><b>${x[0]}</b></td><td>${x[1]} cm</td><td>${x[2]} cm</td></tr>`).join('')}</tbody>`;
+  $('#t-ad').innerHTML=t(MED_AD);$('#t-inf').innerHTML=t(MED_INF);
+}
+
+/* ---------- navegação e eventos ---------- */
+const ABAS=['novo','pedidos','mensagens','producao','medidas','ajustes'];
+function rota(){const h=location.hash.slice(1);const a=ABAS.includes(h)?h:'novo';
+  for(const x of ABAS){$('#v-'+x).hidden=x!==a;document.querySelector(`[data-tab=${x}]`).toggleAttribute('aria-current',false);}
+  document.querySelector(`[data-tab=${a}]`).setAttribute('aria-current','page');
+  if(a==='producao')renderProducao(); if(a==='pedidos')renderPedidos(); if(a==='mensagens')renderMensagens(); if(a==='ajustes')renderAjustes();}
+function tudo(){renderPedidos();renderMensagens();if(!$('#v-producao').hidden)renderProducao();if(pickerM&&!$('#ov').hidden)renderPicker()}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b){if(e.target.id==='ov'){$('#ov').hidden=true;pickerM=null}return}
+  const a=b.dataset.act, id=b.dataset.id, p=id&&pedidos.find(x=>x.id===id);
+  if(a==='abrir'){pickerM=+b.dataset.m;renderPicker();$('#ov').hidden=false}
+  else if(a==='fechar'){$('#ov').hidden=true;pickerM=null}
+  else if(a==='add'){const t=b.dataset.t,i=cart.find(x=>x.m===pickerM&&x.t===t);if(i)i.q++;else cart.push({m:pickerM,t,q:1});renderCart();renderPicker();toast(`Adicionado: tamanho ${t}`)}
+  else if(a==='mais'){cart[+b.dataset.k].q++;renderCart()}
+  else if(a==='menos'){const k=+b.dataset.k;if(--cart[k].q<=0)cart.splice(k,1);renderCart()}
+  else if(a==='limpar')limpar();
+  else if(a==='salvar')salvar();
+  else if(a==='copiar')copiar('msg-txt','Mensagem copiada');
+  else if(a==='copiar-forn')copiar('forn-txt','Resumo copiado');
+  else if(a==='filtro'){filtro=b.dataset.f;renderPedidos()}
+  else if(a==='toggle'){aberto=aberto===id?null:id;confirma=null;renderPedidos()}
+  else if(a==='pagar')mudar(id,{pago:true,forma:b.dataset.forma,pagoEm:new Date().toISOString()},'Pagamento registrado');
+  else if(a==='despagar')mudar(id,{pago:false,forma:'',pagoEm:null});
+  else if(a==='ent'&&p)mudar(id,{[b.dataset.k]:!p[b.dataset.k]},p[b.dataset.k]?'':'Entrega registrada');
+  else if(a==='msg'&&p)mostrarMsg(p,false);
+  else if(a==='copiar-link-dlg')copiar('link-txt','Link copiado');
+  else if(a==='copiar-link'&&p)copiarTxt(linkWa(p),'Link copiado');
+  else if(a==='copiar-todos')copiarTxt(ativos().filter(x=>!x.msgEnv&&linkWa(x)).sort(porData).map(x=>`Pedido ${cod(x)} · ${x.resp}\n${linkWa(x)}`).join('\n\n'),'Links copiados');
+  else if(a==='enviada'){$('#ov').hidden=true;pickerM=null;mudar(id,{msgEnv:b.dataset.v==='1'},b.dataset.v==='1'?'Marcada como enviada':'Voltou para a lista de mensagens')}
+  else if(a==='dev'){lerCfg();cfg.dev=b.dataset.d;LS.set('cfg',cfg);aviso('');renderAjustes();toast(b.dataset.d==='R'?'Aparelho do Robert':'Este é o iPad '+cfg.dev)}
+  else if(a==='salvar-cfg'){lerCfg();sincErro='';shas={};LS.set('shas',shas);toast('Ajustes salvos');sincronizar(true)}
+  else if(a==='bk-copiar')copiarTxt(backup(),'Backup copiado');
+  else if(a==='bk-importar')importar($('#c-imp').value);
+  else if(a==='bk-share'){const f=new File([backup()],`pedidos-stand-${cfg.dev||'x'}.json`,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f]}).catch(()=>{});else copiarTxt(backup(),'Este aparelho não compartilha arquivos. Backup copiado.')}
+  else if(a==='pedir-cancel'){confirma=id;renderPedidos()}
+  else if(a==='cancelar'){confirma=null;mudar(id,{cancelado:true},'Pedido cancelado')}
+  else if(a==='reativar')mudar(id,{cancelado:false},'Pedido reativado');
+  else if(a==='editar'&&p){editando=p;cart=p.itens.map(i=>({...i}));$('#f-resp').value=p.resp||'';$('#f-fone').value=p.fone||'';$('#f-aluno').value=p.aluno||'';$('#f-turma').value=p.turma||'';$('#f-obs').value=p.obs||'';
+    $('#pg-'+(p.pago?p.forma:'reserva')).checked=true;renderCart();location.hash='novo';$('#cart').scrollIntoView({block:'start'})}
+});
+$('#busca').addEventListener('input',renderPedidos);
+window.addEventListener('hashchange',rota);
+
+/* ---------- início ---------- */
+function aviso(t){const b=$('#banner');b.textContent=t;b.hidden=!t}
+document.addEventListener('change',e=>{
+  if(e.target.id==='c-arq'&&e.target.files[0])e.target.files[0].text().then(importar);
+  if(e.target.id==='c-nome')lerCfg();
+});
+renderCatalogo();renderMedidas();renderCart();tudo();rota();status();
+if(!cfg.dev){location.hash='ajustes';aviso('Antes de vender, escolha em Ajustes qual iPad é este (A ou B).')}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.ready.then(()=>{offlineOk=true;if(!$('#v-ajustes').hidden)renderAjustes()})}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+window.addEventListener('online',()=>sincronizar());window.addEventListener('offline',status);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')sincronizar()});
+setInterval(()=>{if(document.visibilityState==='visible')sincronizar()},90000);
+sincronizar();
+</script>
+
+</body>
+</html>
