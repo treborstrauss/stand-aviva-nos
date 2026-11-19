@@ -635,7 +635,12 @@ document.addEventListener('change',e=>{
 });
 renderCatalogo();renderMedidas();renderCart();tudo();rota();status();
 if(!cfg.dev){location.hash='ajustes';aviso('Antes de vender, escolha em Ajustes qual iPad é este (A ou B).')}
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  // versão nova publicada: recarrega sozinho, desde que não haja pedido em andamento
+  const tinha=!!navigator.serviceWorker.controller; let recarregou=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!tinha||recarregou)return;recarregou=true;
+    if(!cart.length&&$('#ov').hidden&&!$('#f-resp').value)location.reload();else aviso('Há uma versão nova do app. Ela entra quando você fechar e abrir de novo.')});
+  navigator.serviceWorker.register('sw.js').then(r=>{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update().catch(()=>{})})}).catch(()=>{});
   navigator.serviceWorker.ready.then(()=>{offlineOk=true;if(!$('#v-ajustes').hidden)renderAjustes()})}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 window.addEventListener('online',()=>sincronizar());window.addEventListener('offline',status);
