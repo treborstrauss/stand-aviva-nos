@@ -182,7 +182,7 @@ tfoot td{font-weight:700;border-bottom:0}
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><b>AVIVA<span>-NOS</span></b><small>Stand de camisetas · sob encomenda</small></div>
+    <div class="brand"><b>AVIVA<span>-NOS</span></b><small>Stand · camisetas e chaveiros</small></div>
     <nav class="tabs" aria-label="Seções">
       <a href="#novo" data-tab="novo">Novo pedido</a>
       <a href="#pedidos" data-tab="pedidos">Pedidos <span class="num" id="tab-n"></span></a>
@@ -202,6 +202,8 @@ tfoot td{font-weight:700;border-bottom:0}
       <div class="grid" id="g-aviva"></div>
       <div><h3>Coleção We Are Eagles · R$ 49,90</h3></div>
       <div class="grid" id="g-wae"></div>
+      <div><h3>Chaveiros · R$ 5,00 · pronta entrega ou reserva</h3></div>
+      <div class="grid" id="g-ch"></div>
     </div>
     <aside class="cart" id="cart">
       <h2 id="cart-title">Pedido em andamento</h2>
@@ -274,13 +276,21 @@ const MODELOS=[
  {id:7, col:'Aviva-nos', nome:'Ave nas costas',       cor:'Marinho', preco:5990},
  {id:10,col:'We Are Eagles', nome:'We Are Eagles',    cor:'Marinho', preco:4990},
  {id:11,col:'We Are Eagles', nome:'We Are Eagles',    cor:'Laranja', preco:4990},
+ // chaveiros: tamanho 'PE' = levou na hora, 'RES' = reserva
+ {id:101,col:'Chaveiros', nome:'Chaveiro Aviva-nos',        cor:'Dourado',        preco:500, ch:true},
+ {id:102,col:'Chaveiros', nome:'Chaveiro Brasão Eagles',    cor:'Branco e cinza', preco:500, ch:true},
+ {id:103,col:'Chaveiros', nome:'Chaveiro Renovação Eagles', cor:'Dourado',        preco:500, ch:true},
+ {id:104,col:'Chaveiros', nome:'Chaveiro Renovação Eagles', cor:'Cinza e branco', preco:500, ch:true},
+ {id:105,col:'Chaveiros', nome:'Chaveiro Harpia Renovação', cor:'Dourado',        preco:500, ch:true},
 ];
+const CAMISETAS=MODELOS.filter(m=>!m.ch), CHAVEIROS=MODELOS.filter(m=>m.ch);
 
 /* ---------- utilidades ---------- */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl=c=>(c/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const M=id=>MODELOS.find(m=>m.id===id);
+const M=id=>MODELOS.find(m=>m.id===id)||{id,col:'',nome:'Item '+id,cor:'',preco:0};
+const desc=i=>M(i.m).ch?(i.t==='PE'?'levou na hora':'reserva'):`tam. ${i.t}${isInf(i.t)?' infantil':''}`;
 const isInf=t=>/^\d+$/.test(t);
 const rotulo=m=>`${m.nome} · ${m.cor}`;
 const dia=iso=>iso?new Date(iso).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
@@ -301,8 +311,9 @@ const porData=(a,b)=>String(a.criadoEm).localeCompare(String(b.criadoEm));
 let cart=[],editando=null,filtro='todos',aberto=null,confirma=null,ocupado=false,pickerM=null;
 
 const ativos=()=>pedidos.filter(p=>!p.cancelado);
-const temA=p=>(p.itens||[]).some(i=>!isInf(i.t)), temI=p=>(p.itens||[]).some(i=>isInf(i.t));
-const entregueTudo=p=>(!temA(p)||p.entA)&&(!temI(p)||p.entI);
+const eA=i=>!M(i.m).ch&&!isInf(i.t), eI=i=>!M(i.m).ch&&isInf(i.t), eC=i=>!!M(i.m).ch&&i.t==='RES';
+const temA=p=>(p.itens||[]).some(eA), temI=p=>(p.itens||[]).some(eI), temC=p=>(p.itens||[]).some(eC);
+const entregueTudo=p=>(!temA(p)||p.entA)&&(!temI(p)||p.entI)&&(!temC(p)||p.entC);
 
 /* ---------- catálogo ---------- */
 function renderCatalogo(){
@@ -311,7 +322,8 @@ function renderCatalogo(){
     <span class="tx"><span class="nm">${esc(m.nome)}</span>
     <span class="ln"><span>${esc(m.cor)}</span><span class="pr num">${brl(m.preco)}</span></span></span></button>`;
   $('#g-aviva').innerHTML=MODELOS.filter(m=>m.col==='Aviva-nos').map(card).join('');
-  $('#g-wae').innerHTML=MODELOS.filter(m=>m.col!=='Aviva-nos').map(card).join('');
+  $('#g-wae').innerHTML=MODELOS.filter(m=>m.col==='We Are Eagles').map(card).join('');
+  $('#g-ch').innerHTML=CHAVEIROS.map(card).join('');
 }
 function qtdCart(m,t){return cart.find(i=>i.m===m&&i.t===t)?.q||0}
 function renderPicker(){
@@ -320,10 +332,14 @@ function renderPicker(){
   $('#dlg').innerHTML=`<div class="hd"><div><h2>${esc(m.nome)}</h2><div class="muted">${esc(m.col)} · ${esc(m.cor)} · <b class="num">${brl(m.preco)}</b></div></div>
       <button class="btn dark" data-act="fechar">Concluir</button></div>
     <img src="img/m${m.id}.jpg" alt="Camiseta ${esc(rotulo(m))}, frente e costas">
-    <div><h3>Adulto · pronto em até ${PRAZO_DIAS} dias corridos</h3></div>
+    ${m.ch?`<div class="sizes" style="grid-template-columns:1fr 1fr">
+        <button class="sz" data-act="add" data-t="PE">Levou agora${qtdCart(m.id,'PE')?`<b class="num">${qtdCart(m.id,'PE')}</b>`:''}</button>
+        <button class="sz" data-act="add" data-t="RES">Reservar${qtdCart(m.id,'RES')?`<b class="num">${qtdCart(m.id,'RES')}</b>`:''}</button></div>
+      <p class="muted" style="font-size:13px">“Levou agora” é o chaveiro que estava pronto no stand. “Reservar” é para buscar depois. Toque de novo para somar mais um.</p>`
+    :`<div><h3>Adulto · pronto em até ${PRAZO_DIAS} dias corridos</h3></div>
     <div class="sizes">${AD.map(bt).join('')}</div>
     <div><h3>Infantil · prazo de até um mês</h3></div><div class="sizes">${INF.map(bt).join('')}</div>
-    <p class="muted" style="font-size:13px">Toque no tamanho para adicionar. Toque de novo para somar mais uma.</p>`;
+    <p class="muted" style="font-size:13px">Toque no tamanho para adicionar. Toque de novo para somar mais uma.</p>`}`;
 }
 
 /* ---------- carrinho ---------- */
@@ -331,13 +347,13 @@ function renderCart(){
   $('#cart-title').textContent=editando?`Editando pedido nº ${cod(editando)}`:'Pedido em andamento';
   $('#b-salvar').textContent=editando?'Salvar alterações':'Registrar pedido';
   $('#items').innerHTML=cart.length?cart.map((i,k)=>{const m=M(i.m);return `<div class="item">
-      <div><div class="nm">${esc(m.nome)}</div><div class="sub">${esc(m.cor)} · tam. <b>${esc(i.t)}</b>${isInf(i.t)?' infantil':''} · <span class="num">${brl(m.preco)}</span></div></div>
+      <div><div class="nm">${esc(m.nome)}</div><div class="sub">${esc(m.cor)} · <b>${esc(desc(i))}</b> · <span class="num">${brl(m.preco)}</span></div></div>
       <div class="qty"><button data-act="menos" data-k="${k}" aria-label="Diminuir">−</button><span class="num">${i.q}</span><button data-act="mais" data-k="${k}" aria-label="Aumentar">+</button></div></div>`}).join('')
-    :'<div class="empty">Toque em uma camiseta ao lado e escolha o tamanho.</div>';
+    :'<div class="empty">Toque em um produto ao lado para adicionar.</div>';
   $('#tot').textContent=brl(totalDe(cart));
-  const a=cart.some(i=>!isInf(i.t)), f=cart.some(i=>isInf(i.t));
+  const a=cart.some(eA), f=cart.some(eI), c=cart.some(eC);
   const base=editando?.criadoEm||new Date().toISOString();
-  $('#prazo').innerHTML=(a||f)?`<div class="note">${a?`Adulto: pronto até <b>${dia(mais(base,PRAZO_DIAS))}</b>.`:''}${a&&f?'<br>':''}${f?`Infantil: prazo maior, de até um mês. Avisamos pelo WhatsApp quando chegar.`:''}</div>`:'';
+  $('#prazo').innerHTML=(a||f||c)?`<div class="note">${a?`Adulto: pronto até <b>${dia(mais(base,PRAZO_DIAS))}</b>.`:''}${a&&f?'<br>':''}${f?`Infantil: prazo maior, de até um mês. Avisamos pelo WhatsApp quando chegar.`:''}${(a||f)&&c?'<br>':''}${c?'Chaveiro reservado: avisamos pelo WhatsApp quando estiver pronto.':''}</div>`:'';
 }
 function limpar(){cart=[];editando=null;for(const id of ['f-resp','f-fone','f-aluno','f-turma','f-obs'])$('#'+id).value='';$('#pg-reserva').checked=true;$('#f-err').hidden=true;renderCart()}
 function erro(t){const e=$('#f-err');e.textContent=t;e.hidden=!t}
@@ -347,13 +363,15 @@ function gravar(){
   rev++;sujo=true;LS.set('sujo',true);tudo();status();clearTimeout(sincT);sincT=setTimeout(()=>sincronizar(),3000);
 }
 function salvar(){
-  const resp=$('#f-resp').value.trim();
+  const soPE=cart.length>0&&cart.every(i=>M(i.m).ch&&i.t==='PE');
+  const resp=$('#f-resp').value.trim()||(soPE?'Venda avulsa':'');
   if(!cfg.dev){location.hash='ajustes';return toast('Escolha primeiro a letra deste iPad.')}
   if(!cart.length) return erro('Adicione pelo menos uma camiseta.');
   if(!resp) return erro('Preencha o nome do responsável.');
   erro('');
   const agora=new Date().toISOString();
   const pg=document.querySelector('input[name=pg]:checked').value;
+  if(soPE&&pg==='reserva') return erro('Chaveiro levado na hora já sai pago: marque Pix ou cartão.');
   let base;
   if(editando) base={...editando};
   else{
@@ -365,16 +383,20 @@ function salvar(){
   const corpo={...base,resp,fone:$('#f-fone').value.trim(),aluno:$('#f-aluno').value.trim(),turma:$('#f-turma').value.trim(),obs:$('#f-obs').value.trim(),
     itens:cart.map(i=>({m:i.m,t:i.t,q:i.q})),pago,forma:pago?pg:'',pagoEm:pago?(base.pago&&base.forma===pg?base.pagoEm:agora):null,upd:agora};
   const k=pedidos.findIndex(p=>p.id===corpo.id); if(k>=0)pedidos[k]=corpo; else pedidos.push(corpo);
-  limpar();gravar();mostrarMsg(corpo,true);
+  if(soPE&&!editando) corpo.msgEnv=true;
+  const avulsa=soPE&&!corpo.fone;
+  limpar();gravar();
+  if(avulsa) toast(`Venda registrada: ${brl(totalDe(corpo.itens))}`); else mostrarMsg(corpo,true);
 }
 
 /* ---------- mensagem para o responsável ---------- */
 function textoMsg(p){
   const l=[`Olá, ${p.resp.split(' ')[0]}! Seu pedido nº ${cod(p)} no stand Aviva-nos foi registrado.`,''];
-  for(const i of p.itens){const m=M(i.m);l.push(`• ${i.q}× ${m.nome} (${m.cor.toLowerCase()}) — tam. ${i.t}${isInf(i.t)?' infantil':''}`)}
+  for(const i of p.itens){const m=M(i.m);l.push(`• ${i.q}× ${m.nome} (${m.cor.toLowerCase()}) — ${desc(i)}`)}
   l.push('',`Total: ${brl(totalDe(p.itens))} — ${p.pago?`pago (${p.forma==='pix'?'Pix':'cartão'})`:'pagamento na retirada, por Pix ou cartão'}`);
   if(temA(p)) l.push(`Tamanhos adultos: prontos em até ${PRAZO_DIAS} dias corridos (até ${dia(mais(p.criadoEm,PRAZO_DIAS))}).`);
   if(temI(p)) l.push(`Tamanhos infantis: prazo maior, de até um mês. Avisamos por aqui quando chegar.`);
+  if(temC(p)) l.push('Chaveiros reservados: avisamos por aqui quando estiverem prontos para retirada.');
   l.push('','Escola Renovação');
   return l.join('\n');
 }
@@ -433,17 +455,19 @@ function renderPedidos(){
       pills.push(p.pago?`<span class="pill ok">Pago · ${p.forma==='pix'?'Pix':'cartão'}</span>`:'<span class="pill warn">A receber</span>');
       if(temA(p)) pills.push(p.entA?'<span class="pill off">Adulto entregue</span>':`<span class="pill ${mais(p.criadoEm,PRAZO_DIAS)<hoje?'bad':'info'}">Adulto até ${dia(mais(p.criadoEm,PRAZO_DIAS))}</span>`);
       if(temI(p)) pills.push(p.entI?'<span class="pill off">Infantil entregue</span>':'<span class="pill info">Infantil até um mês</span>');
+      if(temC(p)) pills.push(p.entC?'<span class="pill off">Chaveiro entregue</span>':'<span class="pill info">Chaveiro reservado</span>');
     }
     const ab=aberto===p.id;
     let bd='';
     if(ab){
-      const its=p.itens.map(i=>{const m=M(i.m);return `<li><b class="num">${i.q}×</b> ${esc(m.nome)} · ${esc(m.cor)} · tam. <b>${esc(i.t)}</b>${isInf(i.t)?' infantil':''}</li>`}).join('');
+      const its=p.itens.map(i=>{const m=M(i.m);return `<li><b class="num">${i.q}×</b> ${esc(m.nome)} · ${esc(m.cor)} · <b>${esc(desc(i))}</b></li>`}).join('');
       const acts=[];
       if(!p.cancelado){
         if(!p.pago) acts.push(`<button class="btn sm pri" data-act="pagar" data-forma="pix" data-id="${p.id}">Recebi no Pix</button><button class="btn sm pri" data-act="pagar" data-forma="cartao" data-id="${p.id}">Recebi no cartão</button>`);
         else acts.push(`<button class="btn sm" data-act="despagar" data-id="${p.id}">Desfazer pagamento</button>`);
         if(temA(p)) acts.push(`<button class="btn sm ${p.entA?'':'dark'}" data-act="ent" data-k="entA" data-id="${p.id}">${p.entA?'Desfazer entrega adulto':'Entregar adulto'}</button>`);
         if(temI(p)) acts.push(`<button class="btn sm ${p.entI?'':'dark'}" data-act="ent" data-k="entI" data-id="${p.id}">${p.entI?'Desfazer entrega infantil':'Entregar infantil'}</button>`);
+        if(temC(p)) acts.push(`<button class="btn sm ${p.entC?'':'dark'}" data-act="ent" data-k="entC" data-id="${p.id}">${p.entC?'Desfazer entrega do chaveiro':'Entregar chaveiro'}</button>`);
         acts.push(`<button class="btn sm" data-act="msg" data-id="${p.id}">Mensagem</button><button class="btn sm" data-act="editar" data-id="${p.id}">Editar</button>`);
         acts.push(confirma===p.id?`<button class="btn sm danger" data-act="cancelar" data-id="${p.id}">Confirmar cancelamento</button>`:`<button class="btn sm danger" data-act="pedir-cancel" data-id="${p.id}">Cancelar pedido</button>`);
       } else acts.push(`<button class="btn sm" data-act="reativar" data-id="${p.id}">Reativar pedido</button>`);
@@ -532,19 +556,24 @@ function renderProducao(){
       ${mods.map(m=>{const r=tams.map(t=>cont[m.id+'|'+t]||0);return `<tr><td>${esc(m.nome)} · ${esc(m.cor)}</td>${r.map(v=>`<td class="${v?'':'z'}">${v||'·'}</td>`).join('')}<td class="t">${r.reduce((a,b)=>a+b,0)}</td></tr>`}).join('')}
       </tbody><tfoot><tr><td>Total</td>${col.map(v=>`<td>${v}</td>`).join('')}<td class="t">${col.reduce((a,b)=>a+b,0)}</td></tr></tfoot></table></div>`};
   const linhas=[];
-  for(const m of MODELOS){const a=AD.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`), f=INF.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`);
+  for(const m of CAMISETAS){const a=AD.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`), f=INF.filter(t=>cont[m.id+'|'+t]).map(t=>`${t}: ${cont[m.id+'|'+t]}`);
     if(a.length) linhas.push(`${m.nome} (${m.cor}) — adulto — ${a.join(', ')}`); if(f.length) linhas.push(`${m.nome} (${m.cor}) — infantil — ${f.join(', ')}`)}
   $('#v-producao').innerHTML=!carregado?'<div class="empty">Carregando pedidos…</div>':`
     <div class="stats">
       <div class="stat"><small>Pedidos</small><b class="num">${at.length}</b></div>
-      <div class="stat"><small>Peças</small><b class="num">${at.reduce((s,p)=>s+pecas(p.itens),0)}</b></div>
+      <div class="stat"><small>Camisetas</small><b class="num">${at.reduce((s,p)=>s+pecas(p.itens.filter(i=>!M(i.m).ch)),0)}</b></div>
+      <div class="stat"><small>Chaveiros</small><b class="num">${at.reduce((s,p)=>s+pecas(p.itens.filter(i=>M(i.m).ch)),0)}</b></div>
       <div class="stat"><small>Vendido</small><b class="num">${brl(tot)}</b></div>
       <div class="stat"><small>Recebido no Pix</small><b class="num">${brl(pix)}</b></div>
       <div class="stat"><small>Recebido no cartão</small><b class="num">${brl(car)}</b></div>
       <div class="stat"><small>A receber na retirada</small><b class="num">${brl(tot-pix-car)}</b></div>
     </div>
-    <div class="panel"><h2>Adulto, por modelo e tamanho</h2>${tabela(AD,MODELOS)}</div>
-    <div class="panel"><h2>Infantil, por modelo e tamanho</h2>${tabela(INF,MODELOS)}</div>
+    <div class="panel"><h2>Adulto, por modelo e tamanho</h2>${tabela(AD,CAMISETAS)}</div>
+    <div class="panel"><h2>Infantil, por modelo e tamanho</h2>${tabela(INF,CAMISETAS)}</div>
+    <div class="panel"><h2>Chaveiros</h2><div class="scroll"><table><thead><tr><th>Modelo</th><th>Levou na hora</th><th>Reserva</th><th>Reserva já entregue</th><th class="t">Total</th></tr></thead><tbody>
+      ${CHAVEIROS.map(m=>{const pe=cont[m.id+'|PE']||0,rs=cont[m.id+'|RES']||0,en=at.filter(p=>p.entC).reduce((s,p)=>s+p.itens.filter(i=>i.m===m.id&&i.t==='RES').reduce((a,i)=>a+i.q,0),0);
+        return `<tr><td>${esc(m.nome.replace('Chaveiro ',''))} · ${esc(m.cor)}</td><td class="${pe?'':'z'}">${pe||'·'}</td><td class="${rs?'':'z'}">${rs||'·'}</td><td class="${en?'':'z'}">${en||'·'}</td><td class="t">${pe+rs}</td></tr>`}).join('')}
+      </tbody></table></div><p class="muted" style="font-size:13px">“Reserva” menos “já entregue” é o que ainda falta imprimir ou separar.</p></div>
     <div class="panel"><h2>Resumo para o fornecedor</h2><textarea class="msg" id="forn-txt" readonly style="min-height:150px">${esc(linhas.join('\n')||'Nenhuma peça pedida ainda.')}</textarea>
       <div class="row"><button class="btn" data-act="copiar-forn">Copiar resumo</button><span class="muted" style="font-size:13px">Pedidos cancelados não entram na conta.</span></div></div>`;
 }
@@ -566,7 +595,7 @@ document.addEventListener('click',e=>{
   const a=b.dataset.act, id=b.dataset.id, p=id&&pedidos.find(x=>x.id===id);
   if(a==='abrir'){pickerM=+b.dataset.m;renderPicker();$('#ov').hidden=false}
   else if(a==='fechar'){$('#ov').hidden=true;pickerM=null}
-  else if(a==='add'){const t=b.dataset.t,i=cart.find(x=>x.m===pickerM&&x.t===t);if(i)i.q++;else cart.push({m:pickerM,t,q:1});renderCart();renderPicker();toast(`Adicionado: tamanho ${t}`)}
+  else if(a==='add'){const t=b.dataset.t,i=cart.find(x=>x.m===pickerM&&x.t===t);if(i)i.q++;else cart.push({m:pickerM,t,q:1});renderCart();renderPicker();toast(M(pickerM).ch?(t==='PE'?'Adicionado: levou agora':'Adicionado: reserva'):`Adicionado: tamanho ${t}`)}
   else if(a==='mais'){cart[+b.dataset.k].q++;renderCart()}
   else if(a==='menos'){const k=+b.dataset.k;if(--cart[k].q<=0)cart.splice(k,1);renderCart()}
   else if(a==='limpar')limpar();
